@@ -3,7 +3,7 @@
 The data structures inside caches, queues and databases, each implemented small enough to read in one sitting, and measured on the property that decides whether you'd use it. Go; standard library only, except `cmd/dbqueue`, which uses pgx and a PostgreSQL container.
 
 ```bash
-make demo   # or: go run ./cmd/hashdemo && go run ./cmd/filterdemo && go run ./cmd/timerdemo && go run ./cmd/partdemo
+make demo   # or: go run ./cmd/hashdemo && go run ./cmd/filterdemo && go run ./cmd/timerdemo && go run ./cmd/partdemo && go run ./cmd/waldemo
 make dbqueue   # needs Docker: PostgreSQL-backed delayed jobs
 make test
 ```
@@ -14,6 +14,7 @@ make test
 | [`filter`](filter/) | How do you check "have we seen this?" for millions of items cheaply? | exact set vs Bloom filters (1%, 0.1%, 0.01%) vs a cuckoo filter: memory, false positives, deletes, overfilling | *How do you check "have we seen this?" for millions of items cheaply?* |
 | [`timers`](timers/) + [`cmd/dbqueue`](cmd/dbqueue/) | How do queues schedule millions of delayed retries? | min-heap vs hashed timing wheels (simulated clock), and PostgreSQL rows with a due-time index claimed with `SKIP LOCKED` | *How do queues schedule millions of delayed retries?* |
 | [`partmatch`](partmatch/) | How do you match messy part numbers to a catalog? | typo lookup: linear scan vs BK-tree vs symmetric-delete index; prefix: scan vs sorted array; description: scan vs inverted index (all words, or rare words only), at 1K–100K items | *How do you match messy part numbers to a catalog?* |
+| [`wal`](wal/) | Why is there an append-only log under queues, databases and the outbox? | a write-ahead log with CRC-framed records: fsync per record vs group commit vs no fsync at 1–64 writers, torn-tail recovery and replay | *Why is there an append-only log under queues, databases and the outbox?* |
 
 Measured results: [results.md](results.md). The tests pin each property (keys moved within a few points of the ideal, no false negatives, false-positive rates within tolerance, deletes that don't disturb other items).
 

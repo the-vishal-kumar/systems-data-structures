@@ -36,4 +36,5 @@ jobs:
           go run ./cmd/filterdemo >> "$GITHUB_STEP_SUMMARY"
           go run ./cmd/timerdemo >> "$GITHUB_STEP_SUMMARY"
           go run ./cmd/partdemo >> "$GITHUB_STEP_SUMMARY"
+          go run ./cmd/waldemo >> "$GITHUB_STEP_SUMMARY"
           DATABASE_URL=postgres://lab:lab@localhost:5432/lab?sslmode=disable go run ./cmd/dbqueue -jobs 20000 -spread 5s >> "$GITHUB_STEP_SUMMARY"

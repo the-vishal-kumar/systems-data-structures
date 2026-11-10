@@ -128,3 +128,23 @@ Synthetic catalog of normalized SKUs like BRG6204RS. 1000 queries per row, each 
 | 100000 | description: score every item | 14.5 ms | 100000 | — |
 | 100000 | description: inverted index | 25.6 ms | 93625 | 55 ms |
 | 100000 | description: inverted index, rare words only (≤1% of items); best score matches the scan in 100% of queries | 6.5 ms | 25806 | 55 ms |
+
+## An append-only log (`cmd/waldemo`)
+
+100-byte records, 3s per row, Go go1.27.3, a laptop SSD (through Docker's overlay filesystem).
+
+| Durability | Writers | Appends/s | p50 | p99 | fsyncs/s | Records per fsync | Survives power loss? |
+|---|---:|---:|---:|---:|---:|---:|---|
+| fsync every record | 1 | 205 | 4.91 ms | 5.73 ms | 205 | 1.0 | yes |
+| fsync every record | 8 | 785 | 10 ms | 14 ms | 785 | 1.0 | yes |
+| fsync every record | 64 | 1103 | 57 ms | 85 ms | 1103 | 1.0 | yes |
+| group commit (one fsync per batch) | 1 | 758 | 1.42 ms | 2.00 ms | 758 | 1.0 | yes |
+| group commit (one fsync per batch) | 8 | 3233 | 2.48 ms | 3.78 ms | 808 | 4.0 | yes |
+| group commit (one fsync per batch) | 64 | 24923 | 2.53 ms | 3.98 ms | 778 | 32.0 | yes |
+| no fsync (OS writes back later) | 1 | 628629 | 1.3 µs | 3.3 µs | 0 | — | **no**: the last seconds are lost |
+| no fsync (OS writes back later) | 8 | 526524 | 1.5 µs | 0.52 ms | 0 | — | **no**: the last seconds are lost |
+| no fsync (OS writes back later) | 64 | 499498 | 1.6 µs | 1.63 ms | 0 | — | **no**: the last seconds are lost |
+
+### Crash recovery
+
+100,000 `key=value` records over 5,000 keys, then a crash halfway through writing the next one. Recovery replayed **100000** records into **5000** keys in 11 ms and cut off a **11-byte** torn tail.
