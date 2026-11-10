@@ -10,6 +10,17 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: lab
+          POSTGRES_PASSWORD: lab
+          POSTGRES_DB: lab
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U lab -d lab"
+          --health-interval 2s --health-timeout 3s --health-retries 30
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
@@ -23,3 +34,5 @@ jobs:
         run: |
           go run ./cmd/hashdemo >> "$GITHUB_STEP_SUMMARY"
           go run ./cmd/filterdemo >> "$GITHUB_STEP_SUMMARY"
+          go run ./cmd/timerdemo >> "$GITHUB_STEP_SUMMARY"
+          DATABASE_URL=postgres://lab:lab@localhost:5432/lab?sslmode=disable go run ./cmd/dbqueue -jobs 20000 -spread 5s >> "$GITHUB_STEP_SUMMARY"

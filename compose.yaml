@@ -1,0 +1,15 @@
+# Only cmd/dbqueue needs a database; everything else is in-memory Go.
+name: systems-data-structures
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: lab
+      POSTGRES_PASSWORD: lab   # local demo only
+      POSTGRES_DB: lab
+    ports: ["127.0.0.1:55434:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lab -d lab"]
+      interval: 2s
+      timeout: 3s
+      retries: 30

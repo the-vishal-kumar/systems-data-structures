@@ -68,3 +68,29 @@ Measured on 2026-11-10 on a laptop (Intel i7-8550U), `make demo`. Keys moved, ba
 | Bloom, 1% | 1000000 | 2000000 | 15.7% |
 | Bloom, 1% | 1000000 | 4000000 | 67.8% |
 | cuckoo | 1048576 slots | first insert failed after 1004245 (95.8% full) | — |
+
+## Delayed jobs in memory (`cmd/timerdemo`)
+
+Simulated 1 ms clock, deadlines spread over 60 s, half the timers cancelled before they fire. Go go1.27.3.
+
+| Timers | Structure | Add | Cancel | Run the clock + fire, per timer fired | Memory the structure adds | Fired late or wrongly |
+|---:|---|---:|---:|---:|---:|---:|
+| 100000 | min-heap | 49 ns | 55 ns | 286 ns | 1.0 MB | 0 |
+| 100000 | timing wheel, 512 slots (~117 turns) | 27 ns | 15 ns | 150 ns | 1.2 MB | 0 |
+| 100000 | timing wheel, 65,536 slots (one turn) | 64 ns | 21 ns | 42 ns | 0.9 MB | 0 |
+| 1000000 | min-heap | 56 ns | 114 ns | 701 ns | 9.1 MB | 0 |
+| 1000000 | timing wheel, 512 slots (~117 turns) | 24 ns | 20 ns | 757 ns | 9.4 MB | 0 |
+| 1000000 | timing wheel, 65,536 slots (one turn) | 47 ns | 84 ns | 44 ns | 11.5 MB | 0 |
+
+## Delayed jobs in PostgreSQL (`cmd/dbqueue`)
+
+PostgreSQL 17.11, 4 workers claiming up to 100 due rows at a time with `FOR UPDATE SKIP LOCKED`; 10% of attempts fail and are retried 1 s later. "Lateness" is when a job was handed out minus when it was due.
+
+| Jobs, due over 20 s | Poll interval when idle | Jobs/s handed out (peak second) | Lateness p50 | p99 | max |
+|---:|---|---:|---:|---:|---:|
+| 200,000 (10,000/s) | 50 ms | 11,280 | 1 ms | 13 ms | 51 ms |
+| 200,000 (10,000/s) | 500 ms | 11,823 | 8 ms | 114 ms | 485 ms |
+| 1,000,000 (50,000/s) | 50 ms | 40,400 | 6.2 s | 13.0 s | 13.1 s |
+| 1,000,000 (50,000/s) | 500 ms | 49,100 | 4.5 s | 9.6 s | 9.7 s |
+
+At 10,000 due per second the workers keep up and lateness is set by the polling interval; at 50,000 per second this setup falls behind and jobs run seconds late.
