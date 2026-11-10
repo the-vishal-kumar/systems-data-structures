@@ -148,3 +148,126 @@ Synthetic catalog of normalized SKUs like BRG6204RS. 1000 queries per row, each 
 ### Crash recovery
 
 100,000 `key=value` records over 5,000 keys, then a crash halfway through writing the next one. Recovery replayed **100000** records into **5000** keys in 11 ms and cut off a **11-byte** torn tail.
+
+## Cache eviction (`cmd/cachedemo`)
+
+1,000,000 distinct keys, Zipf s=0.9.
+
+### Steady traffic: hit rate over 4,000,000 accesses after warming up
+
+| Cache size | LRU | LFU | W-TinyLFU |
+|---:|---:|---:|---:|
+| 1,000 (0.1% of keys) | 22.3% | 32.4% | 32.7% |
+| 10,000 (1.0% of keys) | 39.5% | 48.8% | 49.4% |
+| 100,000 (10.0% of keys) | 63.7% | 69.0% | 69.4% |
+
+### After a one-off scan of 50,000 keys (cache of 10,000)
+
+| Policy | Hit rate before | Next 5,000 accesses | Next 100,000 accesses |
+|---|---:|---:|---:|
+| LRU | 39.4% | 26.1% | 39.1% |
+| LFU | 48.6% | 48.9% | 48.5% |
+| W-TinyLFU | 49.3% | 49.6% | 49.1% |
+
+### When popularity shifts to new keys (cache of 10,000)
+
+| Policy | Before the shift | First 200,000 after | Next 1,000,000 after |
+|---|---:|---:|---:|
+| LRU | 39.4% | 39.2% | 39.5% |
+| LFU | 51.1% | 12.9% | 15.5% |
+| W-TinyLFU | 49.5% | 38.4% | 47.1% |
+
+## Counting distinct items (`cmd/hlldemo`)
+
+### Exact set (Go map of 64-bit IDs)
+
+| Distinct items | Memory |
+|---:|---:|
+| 100,000 | 2.3 MiB |
+| 1,000,000 | 36.0 MiB |
+| 10,000,000 | 288.6 MiB |
+
+### HyperLogLog: relative error over 20 independent streams
+
+| Precision | Memory | Expected σ | n = 1,000 (mean / worst) | n = 100,000 (mean / worst) | n = 10,000,000 (mean / worst) |
+|---:|---:|---:|---:|---:|---:|
+| 10 | 1 KiB | 3.25% | 1.95% / 6.80% | 2.75% / 6.85% | 2.11% / 6.80% |
+| 12 | 4 KiB | 1.62% | 0.95% / 3.00% | 1.12% / 2.72% | 1.24% / 2.99% |
+| 14 | 16 KiB | 0.81% | 0.33% / 1.30% | 0.54% / 1.35% | 0.88% / 1.84% |
+| 16 | 64 KiB | 0.41% | 0.20% / 0.40% | 0.32% / 0.71% | 0.31% / 0.85% |
+
+### A week from seven daily sketches (p = 14, 16 KiB each)
+
+| Exact weekly uniques | Merged estimate | Error |
+|---:|---:|---:|
+| 800,000 | 810,545 | 1.32% |
+
+## Top-k heavy hitters (`cmd/topkdemo`)
+
+20,000,000 events over 5,000,000 distinct keys.
+
+### Zipf s=1.1 (the 10th most frequent key appears 188,323 times)
+
+| Method | Memory | ns per event | True top 10 found | Worst count error in its top 10 (vs the true 10th count) |
+|---|---:|---:|---:|---:|
+| exact map | ~57.6 MiB | 46 | 10 | 0 |
+| count-min sketch + heap, width 4,096 × 4 | 129 KiB | 61 | 10 | 0.7% |
+| count-min sketch + heap, width 65,536 × 4 | 2.0 MiB | 66 | 10 | 0.0% |
+| Space-Saving, 100 counters | 6 KiB | 117 | 10 | 0.0% |
+| Space-Saving, 1,000 counters | 62 KiB | 112 | 10 | 0.0% |
+
+### Zipf s=0.8 (the 10th most frequent key appears 29,935 times)
+
+| Method | Memory | ns per event | True top 10 found | Worst count error in its top 10 (vs the true 10th count) |
+|---|---:|---:|---:|---:|
+| exact map | ~149.1 MiB | 116 | 10 | 0 |
+| count-min sketch + heap, width 4,096 × 4 | 129 KiB | 64 | 10 | 13.6% |
+| count-min sketch + heap, width 65,536 × 4 | 2.0 MiB | 79 | 10 | 0.8% |
+| Space-Saving, 100 counters | 6 KiB | 186 | 2 | 668.1% |
+| Space-Saving, 1,000 counters | 62 KiB | 225 | 10 | 0.0% |
+
+## Leaderboards (`cmd/skiplistdemo`)
+
+Each board is filled with n players, then measured on random score updates, rank lookups and top-10 reads.
+
+| Players | Structure | Update | Rank of a player | Top 10 |
+|---:|---|---:|---:|---:|
+| 10,000 | skip list | 1.1 µs | 453 ns | 2.8 µs |
+| 10,000 | sorted slice | 4.1 µs | 203 ns | 254 ns |
+| 10,000 | map + scan | 52 ns | 174.8 µs | 2.4 ms |
+| 100,000 | skip list | 2.5 µs | 1.1 µs | 577 ns |
+| 100,000 | sorted slice | 279.9 µs | 517 ns | 288 ns |
+| 100,000 | map + scan | 99 ns | 1.6 ms | 31.4 ms |
+| 1,000,000 | skip list | 6.3 µs | 3.2 µs | 429 ns |
+| 1,000,000 | sorted slice | 3.4 ms | 845 ns | 676 ns |
+| 1,000,000 | map + scan | 354 ns | 21.6 ms | 390.6 ms |
+
+## Finding differences between replicas (`cmd/merkledemo`)
+
+1,000,000 keys, 200-byte values. Full copy: 203.1 MiB; a hash per key: 42.9 MiB, in one round trip each.
+
+| Keys that differ | Merkle, 4,096 leaves: bytes / round trips | Merkle, 65,536 leaves: bytes / round trips | Found all? |
+|---:|---:|---:|---|
+| 0 | 32 B / 1 | 32 B / 1 | true |
+| 1 | 11.6 KiB / 14 | 2.0 KiB / 18 | true |
+| 10 | 114.7 KiB / 14 | 15.2 KiB / 18 | true |
+| 100 | 1.1 MiB / 14 | 128.9 KiB / 18 | true |
+| 1,000 | 9.5 MiB / 14 | 1.1 MiB / 18 | true |
+| 10,000 | 39.3 MiB / 14 | 8.3 MiB / 18 | true |
+
+## Finding what's nearby (`cmd/geodemo`)
+
+1,000,000 points over India, half clustered around 10 cities. Build time: geohash 1376 ms (6 precisions), quadtree 335 ms. 200 queries per row (the full scan runs the first 20 of them, so its average differs slightly), half in a city centre and half anywhere.
+
+| Radius | Method | Points checked per query (avg) | Found (avg) | Time per query |
+|---:|---|---:|---:|---:|
+| 1 km | full scan | 1,000,000 | 165 | 104.259ms |
+| 1 km | geohash cells | 8,243 | 160 | 1.23ms |
+| 1 km | quadtree | 204 | 160 | 43µs |
+| 2 km | full scan | 1,000,000 | 632 | 107.238ms |
+| 2 km | geohash cells | 8,285 | 639 | 1.351ms |
+| 2 km | quadtree | 809 | 639 | 161µs |
+| 5 km | full scan | 1,000,000 | 3707 | 131.148ms |
+| 5 km | geohash cells | 29,536 | 3733 | 4.014ms |
+| 5 km | quadtree | 4,635 | 3733 | 851µs |
+
