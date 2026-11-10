@@ -94,3 +94,37 @@ PostgreSQL 17.11, 4 workers claiming up to 100 due rows at a time with `FOR UPDA
 | 1,000,000 (50,000/s) | 500 ms | 49,100 | 4.5 s | 9.6 s | 9.7 s |
 
 At 10,000 due per second the workers keep up and lateness is set by the polling interval; at 50,000 per second this setup falls behind and jobs run seconds late.
+
+## Matching messy part numbers (`cmd/partdemo`)
+
+Synthetic catalog of normalized SKUs like BRG6204RS. 1000 queries per row, each a real SKU with one typo (or its first 5 characters, or a reworded description). Go go1.27.3.
+
+| Catalog | Lookup | Per query | Distances computed / items scored per query | Index build |
+|---:|---|---:|---:|---:|
+| 1000 | typo: linear scan | 249 µs | 1000 | — |
+| 1000 | typo: BK-tree, distance ≤ 1 | 32 µs | 96 | 2 ms |
+| 1000 | typo: BK-tree, distance ≤ 2 | 91 µs | 313 | 2 ms |
+| 1000 | typo: symmetric-delete index (9660 keys, 9660 entries) | 0.99 µs | a few | 2 ms |
+| 1000 | prefix: linear scan | 5.30 µs | 1000 | — |
+| 1000 | prefix: sorted array + binary search | 0.21 µs | log₂ n + matches | 0 ms |
+| 1000 | description: score every item | 162 µs | 1000 | — |
+| 1000 | description: inverted index | 257 µs | 937 | 1 ms |
+| 1000 | description: inverted index, rare words only (≤1% of items); best score matches the scan in 100% of queries | 81 µs | 299 | 1 ms |
+| 10000 | typo: linear scan | 2.6 ms | 10000 | — |
+| 10000 | typo: BK-tree, distance ≤ 1 | 136 µs | 374 | 19 ms |
+| 10000 | typo: BK-tree, distance ≤ 2 | 646 µs | 1721 | 19 ms |
+| 10000 | typo: symmetric-delete index (96416 keys, 96584 entries) | 1.45 µs | a few | 27 ms |
+| 10000 | prefix: linear scan | 60 µs | 10000 | — |
+| 10000 | prefix: sorted array + binary search | 0.75 µs | log₂ n + matches | 2 ms |
+| 10000 | description: score every item | 1.4 ms | 10000 | — |
+| 10000 | description: inverted index | 2.7 ms | 9332 | 5 ms |
+| 10000 | description: inverted index, rare words only (≤1% of items); best score matches the scan in 100% of queries | 687 µs | 2690 | 5 ms |
+| 100000 | typo: linear scan | 25.1 ms | 100000 | — |
+| 100000 | typo: BK-tree, distance ≤ 1 | 608 µs | 1297 | 257 ms |
+| 100000 | typo: BK-tree, distance ≤ 2 | 3.6 ms | 7886 | 257 ms |
+| 100000 | typo: symmetric-delete index (949386 keys, 966195 entries) | 1.94 µs | a few | 442 ms |
+| 100000 | prefix: linear scan | 563 µs | 100000 | — |
+| 100000 | prefix: sorted array + binary search | 5.57 µs | log₂ n + matches | 24 ms |
+| 100000 | description: score every item | 14.5 ms | 100000 | — |
+| 100000 | description: inverted index | 25.6 ms | 93625 | 55 ms |
+| 100000 | description: inverted index, rare words only (≤1% of items); best score matches the scan in 100% of queries | 6.5 ms | 25806 | 55 ms |
