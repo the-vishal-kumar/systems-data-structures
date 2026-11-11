@@ -105,7 +105,6 @@ func main() {
 		}
 		row("description: inverted index", time.Since(t), fmt.Sprintf("%d", scored/queries), build)
 		scored, same := 0, 0
-		t = time.Now()
 		for _, q := range desc {
 			_, sc, s := inv.BestSelective(q, 0.01)
 			scored += s
