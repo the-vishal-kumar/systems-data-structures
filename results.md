@@ -42,11 +42,11 @@ Measured on 2026-11-10 on a laptop (Intel i7-8550U), `make demo`. Keys moved, ba
 
 | Algorithm | 10 nodes | 1,000 nodes | Memory (ring points, 1,000 nodes) |
 |---|---:|---:|---:|
-| mod N | 27 ns | 27 ns | — |
+| mod N | 27 ns | 27 ns | - |
 | ring, 1 point per node | 50 ns | 82 ns | 1000 |
 | ring, 100 points per node | 82 ns | 158 ns | 100000 |
-| rendezvous | 64 ns | 2342 ns | — |
-| jump hash | 46 ns | 83 ns | — |
+| rendezvous | 64 ns | 2342 ns | - |
+| jump hash | 46 ns | 83 ns | - |
 
 ## Membership filters (`cmd/filterdemo`)
 
@@ -67,7 +67,7 @@ Measured on 2026-11-10 on a laptop (Intel i7-8550U), `make demo`. Keys moved, ba
 | Bloom, 1% | 1000000 | 1000000 | 1.0% |
 | Bloom, 1% | 1000000 | 2000000 | 15.7% |
 | Bloom, 1% | 1000000 | 4000000 | 67.8% |
-| cuckoo | 1048576 slots | first insert failed after 1004245 (95.8% full) | — |
+| cuckoo | 1048576 slots | first insert failed after 1004245 (95.8% full) | - |
 
 ## Delayed jobs in memory (`cmd/timerdemo`)
 
@@ -101,31 +101,31 @@ Synthetic catalog of normalized SKUs like BRG6204RS. 1000 queries per row, each 
 
 | Catalog | Lookup | Per query | Distances computed / items scored per query | Index build |
 |---:|---|---:|---:|---:|
-| 1000 | typo: linear scan | 249 µs | 1000 | — |
+| 1000 | typo: linear scan | 249 µs | 1000 | - |
 | 1000 | typo: BK-tree, distance ≤ 1 | 32 µs | 96 | 2 ms |
 | 1000 | typo: BK-tree, distance ≤ 2 | 91 µs | 313 | 2 ms |
 | 1000 | typo: symmetric-delete index (9660 keys, 9660 entries) | 0.99 µs | a few | 2 ms |
-| 1000 | prefix: linear scan | 5.30 µs | 1000 | — |
+| 1000 | prefix: linear scan | 5.30 µs | 1000 | - |
 | 1000 | prefix: sorted array + binary search | 0.21 µs | log₂ n + matches | 0 ms |
-| 1000 | description: score every item | 162 µs | 1000 | — |
+| 1000 | description: score every item | 162 µs | 1000 | - |
 | 1000 | description: inverted index | 257 µs | 937 | 1 ms |
 | 1000 | description: inverted index, rare words only (≤1% of items); best score matches the scan in 100% of queries | 81 µs | 299 | 1 ms |
-| 10000 | typo: linear scan | 2.6 ms | 10000 | — |
+| 10000 | typo: linear scan | 2.6 ms | 10000 | - |
 | 10000 | typo: BK-tree, distance ≤ 1 | 136 µs | 374 | 19 ms |
 | 10000 | typo: BK-tree, distance ≤ 2 | 646 µs | 1721 | 19 ms |
 | 10000 | typo: symmetric-delete index (96416 keys, 96584 entries) | 1.45 µs | a few | 27 ms |
-| 10000 | prefix: linear scan | 60 µs | 10000 | — |
+| 10000 | prefix: linear scan | 60 µs | 10000 | - |
 | 10000 | prefix: sorted array + binary search | 0.75 µs | log₂ n + matches | 2 ms |
-| 10000 | description: score every item | 1.4 ms | 10000 | — |
+| 10000 | description: score every item | 1.4 ms | 10000 | - |
 | 10000 | description: inverted index | 2.7 ms | 9332 | 5 ms |
 | 10000 | description: inverted index, rare words only (≤1% of items); best score matches the scan in 100% of queries | 687 µs | 2690 | 5 ms |
-| 100000 | typo: linear scan | 25.1 ms | 100000 | — |
+| 100000 | typo: linear scan | 25.1 ms | 100000 | - |
 | 100000 | typo: BK-tree, distance ≤ 1 | 608 µs | 1297 | 257 ms |
 | 100000 | typo: BK-tree, distance ≤ 2 | 3.6 ms | 7886 | 257 ms |
 | 100000 | typo: symmetric-delete index (949386 keys, 966195 entries) | 1.94 µs | a few | 442 ms |
-| 100000 | prefix: linear scan | 563 µs | 100000 | — |
+| 100000 | prefix: linear scan | 563 µs | 100000 | - |
 | 100000 | prefix: sorted array + binary search | 5.57 µs | log₂ n + matches | 24 ms |
-| 100000 | description: score every item | 14.5 ms | 100000 | — |
+| 100000 | description: score every item | 14.5 ms | 100000 | - |
 | 100000 | description: inverted index | 25.6 ms | 93625 | 55 ms |
 | 100000 | description: inverted index, rare words only (≤1% of items); best score matches the scan in 100% of queries | 6.5 ms | 25806 | 55 ms |
 
@@ -141,9 +141,9 @@ Synthetic catalog of normalized SKUs like BRG6204RS. 1000 queries per row, each 
 | group commit (one fsync per batch) | 1 | 758 | 1.42 ms | 2.00 ms | 758 | 1.0 | yes |
 | group commit (one fsync per batch) | 8 | 3233 | 2.48 ms | 3.78 ms | 808 | 4.0 | yes |
 | group commit (one fsync per batch) | 64 | 24923 | 2.53 ms | 3.98 ms | 778 | 32.0 | yes |
-| no fsync (OS writes back later) | 1 | 628629 | 1.3 µs | 3.3 µs | 0 | — | **no**: the last seconds are lost |
-| no fsync (OS writes back later) | 8 | 526524 | 1.5 µs | 0.52 ms | 0 | — | **no**: the last seconds are lost |
-| no fsync (OS writes back later) | 64 | 499498 | 1.6 µs | 1.63 ms | 0 | — | **no**: the last seconds are lost |
+| no fsync (OS writes back later) | 1 | 628629 | 1.3 µs | 3.3 µs | 0 | - | **no**: the last seconds are lost |
+| no fsync (OS writes back later) | 8 | 526524 | 1.5 µs | 0.52 ms | 0 | - | **no**: the last seconds are lost |
+| no fsync (OS writes back later) | 64 | 499498 | 1.6 µs | 1.63 ms | 0 | - | **no**: the last seconds are lost |
 
 ### Crash recovery
 

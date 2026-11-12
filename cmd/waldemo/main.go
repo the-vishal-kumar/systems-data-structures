@@ -75,7 +75,7 @@ func main() {
 			syncs := l.Syncs()
 			l.Close()
 			slices.Sort(lat)
-			per := "—"
+			per := "-"
 			if syncs > 0 {
 				per = fmt.Sprintf("%.1f", float64(len(lat))/float64(syncs))
 			}
