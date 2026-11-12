@@ -72,7 +72,7 @@ func main() {
 	fmt.Println("| Algorithm | 10 nodes | 1,000 nodes | Memory (ring points, 1,000 nodes) |\n|---|---:|---:|---:|")
 	big := hashring.Nodes(1000)
 	for _, a := range algs {
-		mem := "—"
+		mem := "-"
 		if r, ok := a.mk(big).(*hashring.Ring); ok {
 			mem = fmt.Sprintf("%d", r.Points())
 		}

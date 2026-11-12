@@ -115,5 +115,5 @@ func main() {
 		}
 		added++
 	}
-	fmt.Printf("| cuckoo | %d slots | first insert failed after %d (%.1f%% full) | — |\n", 1<<20, added, cf.LoadFactor()*100)
+	fmt.Printf("| cuckoo | %d slots | first insert failed after %d (%.1f%% full) | - |\n", 1<<20, added, cf.LoadFactor()*100)
 }

@@ -13,7 +13,7 @@ import (
 const (
 	items    = 1_000_000 // distinct keys
 	accesses = 4_000_000
-	skew     = 0.9 // Zipf exponent; web traffic is often 0.7–1.0
+	skew     = 0.9 // Zipf exponent; web traffic is often 0.7 to 1.0
 )
 
 func trace(z *cache.Zipf, n, epoch int) []uint64 {

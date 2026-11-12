@@ -39,7 +39,7 @@ func main() {
 			typo[i], pre[i], desc[i] = partmatch.Typo(skus[j], r), skus[j][:5], partmatch.Rephrase(descs[j], r)
 		}
 		row := func(what string, d time.Duration, work string, build time.Duration) {
-			b := "—"
+			b := "-"
 			if build > 0 {
 				b = fmt.Sprintf("%.0f ms", float64(build.Microseconds())/1000)
 			}
